@@ -105,7 +105,7 @@
         /// <param name="nombreTabla"></param>
         /// <param name="where"></param>
         /// <returns></returns>
-        public static string GetSqlUdate<T>(this T objeto, string nombreTabla, string where)
+        public static string GetSqlUpdate<T>(this T objeto, string nombreTabla, string where)
         {
             try
             {
