@@ -40,7 +40,7 @@
             {
                 StringBuilder sql = new StringBuilder();
                 Type type = objeto.GetType();
-                var propertyInfo = type.GetProperties().Where(x => ((Ignore)x.GetCustomAttribute(typeof(Ignore), true)) == null && ((Identidad)x.GetCustomAttribute(typeof(Identidad), true)) == null );
+                var propertyInfo = type.GetProperties().Where(x => ((Ignore)x.GetCustomAttribute(typeof(Ignore), true)) == null);
                 sql.Append($"SELECT ");
                 string cadena = string.Empty;
                 propertyInfo.ToList().ForEach(x => cadena += x.Name + ",");
