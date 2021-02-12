@@ -79,9 +79,9 @@
                 cadena = string.Empty;
                 propertyInfo.ToList().ForEach(item=> {
                    valor = typeof(T).GetProperty(item.Name).GetValue(objeto, null);
-                    if (valor != null && (valor is float || valor is int || valor is double || valor is decimal))
+                    if (valor != null && (valor is float || valor is int || valor is double || valor is decimal || valor is Enum))
                         cadena += $"{valor} ,";
-                    else
+                    else if(valor != null)
                     {
                         if (valor is DateTime)
                             cadena += $"'{valor:yyyy-MM-dd hh:mm:ss}',";
@@ -120,11 +120,11 @@
                 propertyInfo.ToList().ForEach(item => {
                     cadena += $"{item.Name}=";
                     valor = typeof(T).GetProperty(item.Name).GetValue(objeto, null);
-                    if (valor != null && (valor is float || valor is int || valor is double || valor is decimal))
+                    if (valor != null && (valor is float || valor is int || valor is double || valor is decimal || valor is Enum))
                     {
                         cadena += $"{valor} ,";
                     }
-                    else
+                    else if(valor != null)
                     {
                         if (valor is DateTime)
                             cadena += $"'{valor:yyyy-MM-dd hh:mm:ss}',";
