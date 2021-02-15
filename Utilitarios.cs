@@ -144,6 +144,51 @@
             }
         }
         /// <summary>
+        /// Retorna el exec de un procedimiento almacenado, con los valores cargados...
+        /// Es importante que los parametros se llamen igual que las propiedades de los objetos para que se pueda hacer merge...
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="objeto"></param>
+        /// <param name="NombreSp"></param>
+        /// <returns></returns>
+        public static string GetStringExecSp<T>(this T objeto,string NombreSp)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                string cadena = string.Empty;
+                object valor;
+
+                Type type = objeto.GetType();
+                var propertyInfo = type.GetProperties().Where(x => ((Ignore)x.GetCustomAttribute(typeof(Ignore), true)) == null);
+                sql.Append($" Exec  {NombreSp} ");
+                propertyInfo.ToList().ForEach(item => {
+                    cadena += $"@{item.Name}=";
+                    valor = typeof(T).GetProperty(item.Name).GetValue(objeto, null);
+                    if (valor != null && (valor is float || valor is int || valor is double || valor is decimal || valor is Enum))
+                    {
+                        cadena += $"{valor},";
+                    }
+                    else if (valor != null)
+                    {
+                        if (valor is DateTime)
+                            cadena += $"'{valor:yyyy-MM-dd hh:mm:ss}',";
+                        else
+                            cadena += $"'{valor}',";
+                    }
+
+                });
+
+                sql.Append($"{cadena.TrimEnd(',')};");
+
+                return sql.ToString();
+            }
+            catch (Exception e)
+            {
+                return e.ToString();
+            }
+        }
+        /// <summary>
         /// Retorna en una lista, los valores y descripciones de las propiedades en un enums
         /// </summary>
         /// <param name="en"></param>
