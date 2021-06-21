@@ -1,4 +1,4 @@
- public static class Utilitarios
+ public static class GenerateSqlScript
     {
         /// <summary>
         /// Atributo tabla
