@@ -1,4 +1,12 @@
- public static class GenerateSqlScript
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+namespace Sqlscritp
+{
+
+    public static class GenerateSqlScript
     {
         /// <summary>
         /// Atributo tabla
@@ -28,18 +36,18 @@
                 Nombre = string.Empty;
                 Schema = string.Empty;
             }
-           
+
         }
 
         /// <summary>
         /// Indica que esta propiedad no sera tomada en cuenta.
         /// </summary>
-        public class Ignore : Attribute{}
+        public class Ignore : Attribute { }
         /// <summary>
         /// Indica que esta propiedad es un campo unico o identity.
         /// </summary>
         public class Identidad : Attribute { }
-    
+
         /// <summary>
         /// Auto Genera un Select apartir de un objeto
         /// </summary>
@@ -53,19 +61,19 @@
             {
                 StringBuilder sql = new StringBuilder();
                 Type type = objeto.GetType();
-                 _ = new Tabla();
+                _ = new Tabla();
                 Tabla tabla = GetInstanciaTabla<T>(objeto);
-                string nombreTabla = $"{(!string.IsNullOrWhiteSpace(tabla.Schema)?$"{tabla.Schema}.":"")} {tabla.Nombre}";
+                string nombreTabla = $"{(!string.IsNullOrWhiteSpace(tabla.Schema) ? $"{tabla.Schema}." : "")} {tabla.Nombre}";
                 if (string.IsNullOrWhiteSpace(nombreTabla))
                 {
-                    nombreTabla = type.Name+"s";
+                    nombreTabla = type.Name + "s";
                 }
                 var propertyInfo = type.GetProperties().Where(x => ((Ignore)x.GetCustomAttribute(typeof(Ignore), true)) == null);
                 sql.Append($"SELECT ");
                 string cadena = string.Empty;
                 propertyInfo.ToList().ForEach(x => cadena += x.Name + ",");
                 sql.Append(cadena.TrimEnd(','));
-                sql.Append($" FROM {nombreTabla} " + (string.IsNullOrWhiteSpace(where) ? "" : $" WHERE {where}")+";");
+                sql.Append($" FROM {nombreTabla} " + (string.IsNullOrWhiteSpace(where) ? "" : $" WHERE {where}") + ";");
                 return sql.ToString();
             }
             catch (Exception e)
@@ -74,7 +82,7 @@
                 throw e;
             }
         }
-        
+
         /// <summary>
         /// Genera automaticamente un Insert, con el objeto y valores cargados a estos
         /// </summary>
@@ -90,24 +98,24 @@
                 object valor;
 
                 Type type = objeto.GetType();
-                 _ = new Tabla();
+                _ = new Tabla();
                 Tabla tabla = GetInstanciaTabla<T>(objeto);
-                string nombreTabla = $"{(!string.IsNullOrWhiteSpace(tabla.Schema)?$"{tabla.Schema}.":"")} {tabla.Nombre}";
+                string nombreTabla = $"{(!string.IsNullOrWhiteSpace(tabla.Schema) ? $"{tabla.Schema}." : "")} {tabla.Nombre}";
                 if (string.IsNullOrWhiteSpace(nombreTabla))
                 {
-                    nombreTabla = type.Name+"s";
+                    nombreTabla = type.Name + "s";
                 }
                 var propertyInfo = type.GetProperties().Where(x => ((Ignore)x.GetCustomAttribute(typeof(Ignore), true)) == null && ((Identidad)x.GetCustomAttribute(typeof(Identidad), true)) == null);
                 sql.Append($"INSERT INTO {nombreTabla}(");
-              
+
                 propertyInfo.ToList().ForEach(x => cadena += $"{x.Name},");
                 sql.Append($"{cadena.TrimEnd(',')}) VALUES(");
                 cadena = string.Empty;
-                propertyInfo.ToList().ForEach(item=> {
-                   valor = typeof(T).GetProperty(item.Name).GetValue(objeto, null);
+                propertyInfo.ToList().ForEach(item => {
+                    valor = typeof(T).GetProperty(item.Name).GetValue(objeto, null);
                     if (valor != null && (valor is float || valor is int || valor is double || valor is decimal || valor is Enum))
                         cadena += $"{valor} ,";
-                    else if(valor != null)
+                    else if (valor != null)
                     {
                         if (valor is DateTime)
                             cadena += $"'{valor:yyyy-MM-dd hh:mm:ss}',";
@@ -115,7 +123,7 @@
                             cadena += $"'{valor}',";
                     }
                 });
-                sql.Append(cadena.TrimEnd(',')+");");
+                sql.Append(cadena.TrimEnd(',') + ");");
                 return sql.ToString();
             }
             catch (Exception e)
@@ -134,21 +142,21 @@
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(where)) { return "Where es un parametro obligatorio!";}
+                if (string.IsNullOrWhiteSpace(where)) { return "Where es un parametro obligatorio!"; }
                 StringBuilder sql = new StringBuilder();
                 string cadena = string.Empty;
                 object valor;
                 Type type = objeto.GetType();
-                 _ = new Tabla();
+                _ = new Tabla();
                 Tabla tabla = GetInstanciaTabla<T>(objeto);
-                string nombreTabla = $"{(!string.IsNullOrWhiteSpace(tabla.Schema)?$"{tabla.Schema}.":"")} {tabla.Nombre}";
+                string nombreTabla = $"{(!string.IsNullOrWhiteSpace(tabla.Schema) ? $"{tabla.Schema}." : "")} {tabla.Nombre}";
                 if (string.IsNullOrWhiteSpace(nombreTabla))
                 {
-                    nombreTabla = type.Name+"s";
+                    nombreTabla = type.Name + "s";
                 }
                 var propertyInfo = type.GetProperties().Where(x => ((Ignore)x.GetCustomAttribute(typeof(Ignore), true)) == null && ((Identidad)x.GetCustomAttribute(typeof(Identidad), true)) == null);
                 sql.Append($" UPDATE {nombreTabla} SET ");
-                
+
                 propertyInfo.ToList().ForEach(item => {
                     cadena += $"{item.Name}=";
                     valor = typeof(T).GetProperty(item.Name).GetValue(objeto, null);
@@ -156,7 +164,7 @@
                     {
                         cadena += $"{valor} ,";
                     }
-                    else if(valor != null)
+                    else if (valor != null)
                     {
                         if (valor is DateTime)
                             cadena += $"'{valor:yyyy-MM-dd hh:mm:ss}',";
@@ -165,7 +173,7 @@
                     }
 
                 });
-                
+
                 sql.Append(cadena.TrimEnd(',') + $" WHERE {where};");
 
                 return sql.ToString();
@@ -183,7 +191,7 @@
         /// <param name="objeto"></param>
         /// <param name="NombreSp"></param>
         /// <returns></returns>
-        public static string GetStringExecSp<T>(this T objeto,string NombreSp)
+        public static string GetStringExecSp<T>(this T objeto, string NombreSp)
         {
             try
             {
@@ -220,6 +228,7 @@
                 return e.ToString();
             }
         }
-      
+
 
     }
+}
