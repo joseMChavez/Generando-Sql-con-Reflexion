@@ -1,6 +1,37 @@
  public static class Utilitarios
     {
         /// <summary>
+        /// Atributo tabla
+        /// </summary>
+        public class Tabla : Attribute
+        {
+            /// <summary>
+            /// Nombre de la tabla
+            /// </summary>
+            public string Nombre { get; set; }
+            /// <summary>
+            /// Schema al que pertenece la tabla
+            /// </summary>
+            public string Schema { get; set; }
+            public Tabla(string nombre, string schema)
+            {
+                Nombre = nombre;
+                Schema = schema;
+            }
+            public Tabla(string nombre)
+            {
+                Nombre = nombre;
+                Schema = string.Empty;
+            }
+            public Tabla()
+            {
+                Nombre = string.Empty;
+                Schema = string.Empty;
+            }
+           
+        }
+
+        /// <summary>
         /// Indica que esta propiedad no sera tomada en cuenta.
         /// </summary>
         public class Ignore : Attribute{}
@@ -8,38 +39,27 @@
         /// Indica que esta propiedad es un campo unico o identity.
         /// </summary>
         public class Identidad : Attribute { }
-        /// <summary>
-        /// Retorna la descripcion de una propiedad especificada
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="objeto"></param>
-        /// <returns></returns>
-        public static string GetDescripcion<T>(this T objeto)
-        {
-            FieldInfo campoInfo = objeto.GetType().GetField(objeto.ToString());
-
-            DescriptionAttribute[] atributos = (DescriptionAttribute[])campoInfo.GetCustomAttributes(
-                typeof(DescriptionAttribute), false);
-
-            if (atributos != null && atributos.Length > 0)
-                return atributos[0].Description;
-
-            return "None";
-        }
+    
         /// <summary>
         /// Auto Genera un Select apartir de un objeto
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="objeto"></param>
-        /// <param name="nombreTabla"></param>
         /// <param name="where"></param>
         /// <returns></returns>
-        public static string GetSqlSelect<T>(this T objeto,string nombreTabla, string where)
+        public static string GetSqlSelect<T>(this T objeto, string where)
         {
             try
             {
                 StringBuilder sql = new StringBuilder();
                 Type type = objeto.GetType();
+                 _ = new Tabla();
+                Tabla tabla = GetInstanciaTabla<T>(objeto);
+                string nombreTabla = $"{(!string.IsNullOrWhiteSpace(tabla.Schema)?$"{tabla.Schema}.":"")} {tabla.Nombre}";
+                if (string.IsNullOrWhiteSpace(nombreTabla))
+                {
+                    nombreTabla = type.Name+"s";
+                }
                 var propertyInfo = type.GetProperties().Where(x => ((Ignore)x.GetCustomAttribute(typeof(Ignore), true)) == null);
                 sql.Append($"SELECT ");
                 string cadena = string.Empty;
@@ -60,9 +80,8 @@
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="objeto"></param>
-        /// <param name="nombreTabla"></param>
         /// <returns></returns>
-        public static string GetSqlInsert<T>(this T objeto, string nombreTabla)
+        public static string GetSqlInsert<T>(this T objeto)
         {
             try
             {
@@ -71,6 +90,13 @@
                 object valor;
 
                 Type type = objeto.GetType();
+                 _ = new Tabla();
+                Tabla tabla = GetInstanciaTabla<T>(objeto);
+                string nombreTabla = $"{(!string.IsNullOrWhiteSpace(tabla.Schema)?$"{tabla.Schema}.":"")} {tabla.Nombre}";
+                if (string.IsNullOrWhiteSpace(nombreTabla))
+                {
+                    nombreTabla = type.Name+"s";
+                }
                 var propertyInfo = type.GetProperties().Where(x => ((Ignore)x.GetCustomAttribute(typeof(Ignore), true)) == null && ((Identidad)x.GetCustomAttribute(typeof(Identidad), true)) == null);
                 sql.Append($"INSERT INTO {nombreTabla}(");
               
@@ -102,10 +128,9 @@
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="objeto"></param>
-        /// <param name="nombreTabla"></param>
         /// <param name="where"></param>
         /// <returns></returns>
-        public static string GetSqlUpdate<T>(this T objeto, string nombreTabla, string where)
+        public static string GetSqlUpdate<T>(this T objeto, string where)
         {
             try
             {
@@ -114,6 +139,13 @@
                 string cadena = string.Empty;
                 object valor;
                 Type type = objeto.GetType();
+                 _ = new Tabla();
+                Tabla tabla = GetInstanciaTabla<T>(objeto);
+                string nombreTabla = $"{(!string.IsNullOrWhiteSpace(tabla.Schema)?$"{tabla.Schema}.":"")} {tabla.Nombre}";
+                if (string.IsNullOrWhiteSpace(nombreTabla))
+                {
+                    nombreTabla = type.Name+"s";
+                }
                 var propertyInfo = type.GetProperties().Where(x => ((Ignore)x.GetCustomAttribute(typeof(Ignore), true)) == null && ((Identidad)x.GetCustomAttribute(typeof(Identidad), true)) == null);
                 sql.Append($" UPDATE {nombreTabla} SET ");
                 
@@ -188,33 +220,6 @@
                 return e.ToString();
             }
         }
-        /// <summary>
-        /// Retorna en una lista, los valores y descripciones de las propiedades en un enums
-        /// </summary>
-        /// <param name="en"></param>
-        /// <returns></returns>
-        public static List<ObjetoSelect> GetDescripcionEnums(Enum en)
-        {
-
-            List<ObjetoSelect> lista = new List<ObjetoSelect>();
-            Type type = en.GetType();
-            var lis = Enum.GetValues(type).Cast<Enum>().Select(value => new
-           {
-             (Attribute.GetCustomAttribute(value.GetType().GetField(value.ToString()), typeof(DescriptionAttribute)) as DescriptionAttribute).Description,
-             value
-            }).OrderBy(item => item.value).ToList();
-
-            foreach (var item in lis)
-            {
-                lista.Add(new ObjetoSelect
-                {
-                    Value =((int)Enum.Parse(type,item.value.ToString())).ToString(),
-                    Descripcion = item.Description
-                }); 
-
-            }
-
-            return lista;
-        }
+      
 
     }
